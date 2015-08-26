@@ -8,7 +8,7 @@
 // [Generated Includes]$
 
 #ifndef NO_LIZARD
-#include "LizardWare_synth.h"
+#include <LizardWare_synth.h>
 ring_t lizard_ring;
 #endif
 
@@ -32,6 +32,7 @@ SI_SBIT(TC1, SFR_P1, 1);
 int main (void)
 {
 	uint32_t spincounter = 0;
+	int speaking = 0;
 
 	// Call hardware initialization routine
 	enter_DefaultMode_from_RESET();
@@ -77,7 +78,6 @@ int main (void)
                   (spincounter & SPEAKER_ENABLE_PERIOD) < SPEAKER_ON_TIME;
                 if (speaker_enable) {
                         int left;
-                        uint32_t cycle;
 #ifndef NO_LIZARD
                         sample_t v;
                         if (!speaking)
@@ -87,7 +87,7 @@ int main (void)
                                 left = v < 0;
                         }
 #else
-                        cycle = spincounter & SPEAKER_PERIOD;
+                        uint32_t cycle = spincounter & SPEAKER_PERIOD;
                         left = cycle < (SPEAKER_PERIOD >> 1);
 #endif
                         if (left) {

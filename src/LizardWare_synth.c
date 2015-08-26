@@ -10,7 +10,7 @@
 #include <stdio.h>
 #endif
 
-#include "LizardWare_synth.h"
+#include <LizardWare_synth.h>
 
 typedef int calc_t;
 

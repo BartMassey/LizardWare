@@ -12,9 +12,9 @@
 typedef int8_t sample_t;
 
 typedef struct ring {
-    sample_t ring_vs[LIZARD_RING_SIZE];
-    uint8_t ring_nvs;
-    uint8_t ring_ptr;
+        sample_t ring_vs[LIZARD_RING_SIZE];
+        uint8_t ring_nvs;
+        uint8_t ring_ptr;
 } ring_t;
 
 extern sample_t lizard_synth(ring_t *ring);

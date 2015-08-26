@@ -1,0 +1,85 @@
+/* Copyright © 2015 Bart Massey */
+/* "Lizard Noise" differential synthesizer
+ * C.f. http://github.com/BartMassey/diffsynth */
+/* [This program is licensed under the "MIT License"]
+   Please see the file COPYING in the source
+   distribution of this software for license terms. */
+
+#ifdef TEST_MAIN
+#include <stdint.h>
+#include <stdio.h>
+#endif
+
+#include "LizardWare_synth.h"
+
+typedef int calc_t;
+
+static calc_t shift_div(calc_t v, calc_t s) {
+    if (v < 0)
+        return -(-v >> s);
+    return v >> s;
+}
+
+static sample_t clamp_signed(calc_t v) {
+    if (v > 127)
+        return 127;
+    if (v < -127)
+        return -127;
+    return (sample_t)v;
+}
+
+static uint8_t inc(uint8_t nvs, uint8_t ptr) {
+    ptr += 1;
+    while (ptr >= nvs)
+        ptr -= nvs;
+    return ptr;
+}
+
+sample_t lizard_synth(ring_t *ring) {
+    uint8_t i0 = ring->ring_ptr;
+    uint8_t i1 = inc(ring->ring_nvs, i0);
+    uint8_t i2 = inc(ring->ring_nvs, i1);
+    sample_t v0 = ring->ring_vs[i0];
+    sample_t v1 = ring->ring_vs[i1];
+    sample_t v2 = ring->ring_vs[i2];
+    calc_t d1 = v1 - v0;
+    calc_t d2 = v2 - v1;
+    calc_t dd = shift_div(d1 - d2, 1);
+    sample_t v = clamp_signed(-dd);
+    ring->ring_vs[i0] = v;
+    ring->ring_ptr = i1;
+    return v;
+}
+
+void lizard_synth_init_ring(ring_t *ring) {
+    int i;
+    ring->ring_nvs = LIZARD_RING_SIZE;
+    ring->ring_ptr = 0;
+    for (i = 0; i < ring->ring_nvs; i++)
+        ring->ring_vs[i] = 0;
+    ring->ring_vs[0] = 127;
+    ring->ring_vs[11] = 63;
+    ring->ring_vs[23] = 32;
+}
+
+#ifdef TEST_MAIN
+
+ring_t lizard_ring;
+
+int main(void) {
+    int i;
+    lizard_synth_init_ring(&lizard_ring);
+    for (i = 0; i < 1000; i++) {
+        sample_t v = lizard_synth(&lizard_ring);
+#ifndef UNCLAMP
+        if (v > 0)
+            v = 127;
+        else if (v < 0)
+            v = -127;
+#endif
+        fwrite(&v, sizeof(v), 1, stdout);
+    }
+    return 0;
+}
+
+#endif
